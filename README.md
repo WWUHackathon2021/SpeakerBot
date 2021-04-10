@@ -1,4 +1,4 @@
 # SpeakerBot
 
-Collab between Joey, Kyle, David
-This bot will implement a playlist feature that RhythmBot does not have
+Collab between: Joey, Kyle, David\
+This bot will implement a playlist feature that the RhythmBot does not have yet!
