@@ -8,6 +8,7 @@ import random
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 bot = commands.Bot(command_prefix='!')
+arr = []
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
@@ -34,5 +35,19 @@ async def test(ctx):
     await ctx.send(response)
 
 # bot.add_command(test)
+
+@bot.command(name = 'add')
+async def test(ctx, arg):
+    arr.append(arg)
+
+@bot.command(name = "show")
+async def test(ctx):
+    await ctx.send(arr)
+
+@bot.command(name = 'delete')
+async def test(ctx, arg):
+    arr.remove(arg)
+
 bot.run(TOKEN)
+
 
