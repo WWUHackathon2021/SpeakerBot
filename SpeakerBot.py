@@ -29,8 +29,8 @@ arr = []
 #     await bot.process_commands(message)
 
 @bot.command()
-async def join(ctx, url: str):
-    vc = discord.utils.get(ctx.guild.voice_channels, name="CF 416")
+async def join(ctx, arg):
+    vc = discord.utils.get(ctx.guild.voice_channels, name=arg)
     try:
         await vc.connect()
         print("joined vc")
