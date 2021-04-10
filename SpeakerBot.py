@@ -27,24 +27,25 @@ bot = commands.Bot(command_prefix='!')
 async def join(ctx, url: str):
     vc = discord.utils.get(ctx.guild.voice_channels, name="CF 416")
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    if not voice.is_connected()
+
+    if not voice.is_connected():
         await vc.connect()
         print("joined vc")
+    else:
+        print("already in vc")
 
 @bot.command()
-async def leave(ctx, url: str)
+async def leave(ctx):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_connected():
-        await vc.disconnect()
-        print("joined vc")
+        await voice.disconnect()
     else:
-
-# @bot.command()
-# async def join(ctx, url: str):
-#     vc = discord.utils.get(ctx.guild.voice_channels, name="CF 416")
-#     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-#     await vc.connect()
-
+        await ctx.send("bot is not connected to vc")
+    # if not vc is None:
+    #     await voice.disconnect()
+    # else:
+    #     await ctx.send("The bot is not connected to a voice channel")
+    
 # @bot.command(name = 'testing')
 # async def test(ctx):
 #     test_quote = [
