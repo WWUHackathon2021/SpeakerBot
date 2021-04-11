@@ -29,7 +29,7 @@ arr = []
 #     await bot.process_commands(message)
 
 @bot.command()
-async def join(ctx, arg):
+async def join(ctx, *arg):
     vc = discord.utils.get(ctx.guild.voice_channels, name=arg)
     try:
         await vc.connect()
