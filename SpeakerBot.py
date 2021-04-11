@@ -12,12 +12,19 @@ TOKEN = os.getenv("TOKEN")
 
 bot = commands.Bot(command_prefix='!')
 
+
+#Once the bot is online, it will display a ready message in the terminal and in the bot-terminal channel.
+
 @bot.event
 async def on_ready():
    print('We have logged in as {0.user}'.format(bot))
    await bot.get_channel(828834006829105162).send("SpeakerBot is ready to go! Make sure to use !help if you want the command list.")
 
+
+#Class of any general commands that don't fit any category.
 class General(commands.Cog):
+
+    #Brings in the bot to the current voice channel. '!join' or '!j'
     @commands.command(aliases=['j'], description="The bot will join whichever call you\'re currently in")
     async def join(self, ctx):
         try:
@@ -34,6 +41,8 @@ class General(commands.Cog):
             print("already in vc")
             await ctx.send("SpeakerBot is already connected to a voice channel!")
 
+
+    #The bot is forced to leave the current channel. '!leave' or '!l'
     @commands.command(aliases=['l'], description="The bot will leave the call.")
     async def leave(self, ctx):
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -46,7 +55,10 @@ class General(commands.Cog):
             print("bot is not connected to vc")
             await ctx.send("Unable to leave voice channel: SpeakerBot is not currently in a voice channel.")
 
+#A class that features all simple music player commands. Playlist commands are seperate.
 class Music(commands.Cog):
+    #The bot plays the youtube video link after the command. '!play [video url]' or '!pl [video url]'
+
     @commands.command(aliases=['pl'], description="The bot will play the youtube link stated after \'!pl\'")
     async def play(self, ctx, url):
         YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
@@ -63,6 +75,7 @@ class Music(commands.Cog):
             await ctx.send("Already playing song")
             return
 
+    #Pauses the current youtube video. '!pause' or '!p'
     @commands.command(aliases=['p'], description="The bot will pause the currently playing video.")
     async def pause(self, ctx):
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -75,6 +88,7 @@ class Music(commands.Cog):
             print("You messed up")
             await ctx.send("Nothing is playing at the moment!")
 
+    #Resumes the current youtube video. '!resume' or '!r'
     @commands.command(aliases=['r'], description="The bot will resume the currently paused video.")
     async def resume(self, ctx):
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -87,6 +101,7 @@ class Music(commands.Cog):
             print("You messed up")
             await ctx.send("It's not paused, silly!")
 
+    #Stops the current song from playing and removes from the queue. '!stop' or '!s'
     @commands.command(aliases=['s'], description="The bot will stop the currently playing video")
     async def stop(self, ctx):
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -94,14 +109,19 @@ class Music(commands.Cog):
         await ctx.send("Music has stopped! :(")
 
 class Playlist(commands.Cog):
-    @commands.command(name = "list")
+
+    #Lists all currently stored playlists in the directory. '!list' or '!l'
+    @commands.command(name = "list", description="The bot displays all stored playlists")
     async def list(self, ctx):
         for f_name in os.listdir('Playlists/.'):
             if f_name.endswith('.txt'):
                 await ctx.send(f_name)
 
-    @commands.command(name = 'addPl')
-    async def addPl(ctx, arg):
+
+    #Add a new playlist if it isn't in the playlist folder already. '!addPl [listname]' or '!ap [listname]'
+    @commands.command(aliases=['ap'], description="The bot adds a new playlist if the name is valid")
+    async def addPl(self, ctx, arg):
+
         newFile = ""
         newFile = "Playlists/"
         newFile += arg + ".txt"
@@ -111,7 +131,10 @@ class Playlist(commands.Cog):
         else:
             file = open(newFile,'w+')
 
-    @commands.command(name = 'add')
+
+    #Adds a new song to the playlist if it's not already in there. '!add [songname] [playlist]'
+    @commands.command(description="The bot adds a new song to the playlist")
+
     async def add(self, ctx, song, playlist):
 
         newPlaylist=""
@@ -153,8 +176,11 @@ class Playlist(commands.Cog):
     #     msg = "Added "+  song +  " to " + playlist
     #     await ctx.send(msg)
 
-    @commands.command(name = "showPl")
-    async def showPl(self, ctx,playlist):
+
+    #Display the indicated playlist. '!showPL [playlist]' or '!sPL [playlist'
+    @commands.command(aliases=['sPL'], description="The bot displays the current edition of the named playlist")
+    async def showPl(self, ctx, playlist):
+
         iter = 1
         songs = " "
         songs += "**------------------------------------------------------------------------------------------**\n"
@@ -172,7 +198,9 @@ class Playlist(commands.Cog):
         songs+="**------------------------------------------------------------------------------------------**\n"
         await ctx.send(songs)
 
-    @commands.command(name = 'delSong')
+    #Delete indicated song from the indicated playlist. Can't be undone!. '!delSong [song name] [playlist]' or '!delS [song name] [playlist]'
+    @commands.command(aliases='delS', description="The bot deletes a selected song from the selected playlist.")
+
     async def delSong(self, ctx, song,playlist):
         # with open(playlist,"r") as f:
         #     lines = f.readlines()
@@ -190,7 +218,9 @@ class Playlist(commands.Cog):
         # @commands.command()
         # async def p(self,ctx,*,query):
 
-    @commands.command(name = 'delPl')
+    #Delete a specified playlist. Can't be undone! '!delPl' or '!dP'
+    @commands.command(aliases='dP', description="The bot deletes an entire playlist")
+
     async def delPl(self, ctx,playlist):
         # for f_name in os.listdir('.'):
         #     if f_name.endswith('.txt'):
