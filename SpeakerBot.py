@@ -152,54 +152,75 @@ async def stop(ctx):
 
 @bot.command(name = "list")
 async def list(ctx):
-    for f_name in os.listdir('.'):
+    for f_name in os.listdir('Playlists/.'):
         if f_name.endswith('.txt'):
             await ctx.send(f_name)
 
 @bot.command(name = 'addPl')
 async def addPl(ctx, arg):
     newFile = ""
-    newFile = arg + ".txt"
-    file = open(newFile,'w+')
+    newFile = "Playlists/"
+    newFile += arg + ".txt"
+    # print(newFile)
+    if os.path.exists(newFile):
+        await ctx.send(arg+" Already Exists")
+    else:
+        file = open(newFile,'w+')
 
 @bot.command(name = 'add')
 async def add(ctx, song, playlist):
+
+    newPlaylist=""
+    newPlaylist +="Playlists/" + playlist
     isSeen = 0
-    with open(playlist) as f:
-        seen = set()
-        dSong = ""
-        dSong = song+'\n'
-        seen.add(dSong)
+    with open(newPlaylist) as f:
         for line in f:
-            line_lower = line.lower()
-            if line_lower in seen:
-                await ctx.send(song + " already exists")
+            if line.strip() == song:
                 isSeen = 1
+                await ctx.send(song + " already exists")
                 return
-            else:
-                seen.add(line_lower)
-    if isSeen == 0:         
-        with open(playlist,'a') as file:
+    if isSeen == 0:
+        with open(newPlaylist,'a') as file:
             newSong = ""
             newSong = song + '\n'
             file.write(newSong)
         msg = "Added "+  song +  " to " + playlist
         await ctx.send(msg)
-#     for root, dirs, files in os.walk('.') :
-#         if playlist in files:
-#             with open(playlist)
 
+
+    # with open(newPlaylist) as f:
+    #     seen = set()
+    #     dSong = ""
+    #     dSong = song
+    #     seen.add(dSong)
+    #     for line in f:
+    #         line_lower = line.lower()
+    #         if line_lower in seen:
+    #             await ctx.send(song + " already exists")
+    #             isSeen = 1
+    #             return
+    #         else:
+    #             seen.add(line_lower)
+    # if isSeen == 0:         
+    #     with open(newPlaylist,'a') as file:
+    #         newSong = ""
+    #         newSong = song + '\n'
+    #         file.write(newSong)
+    #     msg = "Added "+  song +  " to " + playlist
+    #     await ctx.send(msg)
 
 @bot.command(name = "showPl")
 async def showPl(ctx,playlist):
     iter = 1
     songs = " "
     songs += "**------------------------------------------------------------------------------------------**\n"
+    newPlaylist=""
+    newPlaylist +="Playlists/" + playlist
     sep = '.'
     owner = playlist.split(sep,1)[0]
     songs += "**"+owner+'\'s Playlist**\n'
     songs += "**------------------------------------------------------------------------------------------**\n"
-    with open(playlist) as file:
+    with open(newPlaylist) as file:
         for line in file:
             line_lower = line.lower()
             songs+= "**"+str(iter)+"**" + ") " + line_lower
@@ -215,10 +236,11 @@ async def delSong(ctx, song,playlist):
     # for line in lines:
     #     print(line.strip("\n") != song)
     #     print(line)
-
-    with open(playlist,"r") as f:
+    newPlaylist=""
+    newPlaylist +="Playlists/" + playlist
+    with open(newPlaylist,"r") as f:
         lines = f.readlines()
-    with open(playlist,"w") as f:
+    with open(newPlaylist,"w") as f:
         for line in lines:
             if line.strip("\n") != song:
                 f.write(line)
@@ -231,7 +253,12 @@ async def delPl(ctx,playlist):
     #     if f_name.endswith('.txt'):
     #         await ctx.send(f_name)
     for f_name in os.listdir('Playlists/.'):
-        print(f_name == playlist)
+        if f_name == playlist:
+            rm = ""
+            rm += "Playlists/"+f_name
+            os.remove(rm)
+            return
+    await ctx.send(playlist+" Does Not Exist")
 
 bot.run(TOKEN)
 
