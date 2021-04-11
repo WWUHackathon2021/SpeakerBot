@@ -11,30 +11,20 @@ from youtube_dl import YoutubeDL
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
-client = discord.Client()
 
 bot = commands.Bot(command_prefix='!')
-# @bot.event
-# async def on_ready():
-#    print('We have logged in as {0.user}'.format(bot))
 
-# @bot.event
-# async def on_ready():
-#     print('We have logged in as {0.user}'.format(bot))
+arr = []
+players = {}
 
-# @bot.event
-# async def on_message(message):
-#     if message.author == bot.user:
-#         return
-
-#     if message.content.startswith('$hello'):
-#         await message.channel.send('Hello!')
-#     await bot.process_commands(message)
+@bot.event
+async def on_ready():
+   print('We have logged in as {0.user}'.format(bot))
+   await bot.get_channel(828834006829105162).send("SpeakerBot is ready to go! Make sure to use !help if you want the command list.")
 
 class General(commands.Cog):
     @commands.command(aliases=['j'], description="The bot will join whichever call you\'re currently in")
     async def join(self, ctx):
-        # vc = discord.utils.get(ctx.guild.voice_channels, name=arg)
         try:
             vc = ctx.author.voice.channel
         except:
@@ -61,7 +51,6 @@ class General(commands.Cog):
             print("bot is not connected to vc")
             await ctx.send("Unable to leave voice channel: SpeakerBot is not currently in a voice channel.")
 
-
 class Music(commands.Cog):
     @commands.command(aliases=['pl'], description="The bot will play the youtube link stated after \'!pl\'")
     async def play(self, ctx, url):
@@ -78,37 +67,6 @@ class Music(commands.Cog):
         else:
             await ctx.send("Already playing song")
             return
-
-    # async def play(ctx, url : str):
-    #     song_here = os.path.isfile("song.mp3")
-    #     try:
-    #         if song_here:
-    #             os.remove("song.mp3")
-    #     except PermissionError:
-    #         await ctx.send("Music is currently playing! Use !stop or !s to stop the song!")
-    #         return
-
-    #     vc = discord.utils.get(ctx.guild.voice_channels, name='CF 420')
-    #     voice = discord.utils.get(bot.voice_clients, guild = ctx.guild)
-
-    #     ydl_opts = {
-    #         'format': 'bestaudio/best',
-    #         'postprocessors': [{
-    #             'key': 'FFmpegExtractAudio',
-    #             'preferredcodec': 'mp3',
-    #             'preferredquality': '192',
-    #         }],
-    #     }
-
-    #     #FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
-
-    #     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-    #         ydl.download([url])
-    #     for file in os.listdir("./"):
-    #         if file.endswith(".mp3"):
-    #             os.rename(file, "song.mp3")
-        
-    #     voice.play(discord.FFmpegPCMAudio("song.mp3"))
 
     @commands.command(aliases=['p'], description="The bot will pause the currently playing video.")
     async def pause(self, ctx):
@@ -140,42 +98,43 @@ class Music(commands.Cog):
         voice.stop()
         await ctx.send("Music has stopped! :(")
 
-@bot.command(name = "list")
-async def list(ctx):
-    for f_name in os.listdir('Playlists/.'):
-        if f_name.endswith('.txt'):
-            await ctx.send(f_name)
+class Playlist(commands.Cog):
+    @commands.command(name = "list")
+    async def list(self, ctx):
+        for f_name in os.listdir('Playlists/.'):
+            if f_name.endswith('.txt'):
+                await ctx.send(f_name)
 
-@bot.command(name = 'addPl')
-async def addPl(ctx, arg):
-    newFile = ""
-    newFile = "Playlists/"
-    newFile += arg + ".txt"
-    # print(newFile)
-    if os.path.exists(newFile):
-        await ctx.send(arg+" Already Exists")
-    else:
-        file = open(newFile,'w+')
+    @commands.command(name = 'addPl')
+    async def addPl(ctx, arg):
+        newFile = ""
+        newFile = "Playlists/"
+        newFile += arg + ".txt"
+        # print(newFile)
+        if os.path.exists(newFile):
+            await ctx.send(arg+" Already Exists")
+        else:
+            file = open(newFile,'w+')
 
-@bot.command(name = 'add')
-async def add(ctx, song, playlist):
+    @commands.command(name = 'add')
+    async def add(self, ctx, song, playlist):
 
-    newPlaylist=""
-    newPlaylist +="Playlists/" + playlist
-    isSeen = 0
-    with open(newPlaylist) as f:
-        for line in f:
-            if line.strip() == song:
-                isSeen = 1
-                await ctx.send(song + " already exists")
-                return
-    if isSeen == 0:
-        with open(newPlaylist,'a') as file:
-            newSong = ""
-            newSong = song + '\n'
-            file.write(newSong)
-        msg = "Added "+  song +  " to " + playlist
-        await ctx.send(msg)
+        newPlaylist=""
+        newPlaylist +="Playlists/" + playlist
+        isSeen = 0
+        with open(newPlaylist) as f:
+            for line in f:
+                if line.strip() == song:
+                    isSeen = 1
+                    await ctx.send(song + " already exists")
+                    return
+        if isSeen == 0:
+            with open(newPlaylist,'a') as file:
+                newSong = ""
+                newSong = song + '\n'
+                file.write(newSong)
+            msg = "Added "+  song +  " to " + playlist
+            await ctx.send(msg)
 
 
     # with open(newPlaylist) as f:
@@ -199,60 +158,58 @@ async def add(ctx, song, playlist):
     #     msg = "Added "+  song +  " to " + playlist
     #     await ctx.send(msg)
 
-@bot.command(name = "showPl")
-async def showPl(ctx,playlist):
-    iter = 1
-    songs = " "
-    songs += "**------------------------------------------------------------------------------------------**\n"
-    newPlaylist=""
-    newPlaylist +="Playlists/" + playlist
-    sep = '.'
-    owner = playlist.split(sep,1)[0]
-    songs += "**"+owner+'\'s Playlist**\n'
-    songs += "**------------------------------------------------------------------------------------------**\n"
-    with open(newPlaylist) as file:
-        for line in file:
-            line_lower = line.lower()
-            songs+= "**"+str(iter)+"**" + ") " + line_lower
-            iter+=1
-    songs+="**------------------------------------------------------------------------------------------**\n"
-    await ctx.send(songs)
+    @commands.command(name = "showPl")
+    async def showPl(self, ctx,playlist):
+        iter = 1
+        songs = " "
+        songs += "**------------------------------------------------------------------------------------------**\n"
+        newPlaylist=""
+        newPlaylist +="Playlists/" + playlist
+        sep = '.'
+        owner = playlist.split(sep,1)[0]
+        songs += "**"+owner+'\'s Playlist**\n'
+        songs += "**------------------------------------------------------------------------------------------**\n"
+        with open(newPlaylist) as file:
+            for line in file:
+                line_lower = line.lower()
+                songs+= "**"+str(iter)+"**" + ") " + line_lower
+                iter+=1
+        songs+="**------------------------------------------------------------------------------------------**\n"
+        await ctx.send(songs)
 
+    @commands.command(name = 'delSong')
+    async def delSong(self, ctx, song,playlist):
+        # with open(playlist,"r") as f:
+        #     lines = f.readlines()
+        # for line in lines:
+        #     print(line.strip("\n") != song)
+        #     print(line)
+        newPlaylist=""
+        newPlaylist +="Playlists/" + playlist
+        with open(newPlaylist,"r") as f:
+            lines = f.readlines()
+        with open(newPlaylist,"w") as f:
+            for line in lines:
+                if line.strip("\n") != song:
+                    f.write(line)
+        # @commands.command()
+        # async def p(self,ctx,*,query):
 
-@bot.command(name = 'delSong')
-async def delSong(ctx, song,playlist):
-    # with open(playlist,"r") as f:
-    #     lines = f.readlines()
-    # for line in lines:
-    #     print(line.strip("\n") != song)
-    #     print(line)
-    newPlaylist=""
-    newPlaylist +="Playlists/" + playlist
-    with open(newPlaylist,"r") as f:
-        lines = f.readlines()
-    with open(newPlaylist,"w") as f:
-        for line in lines:
-            if line.strip("\n") != song:
-                f.write(line)
-    # @bot.command()
-    # async def p(self,ctx,*,query):
-
-@bot.command(name = 'delPl')
-async def delPl(ctx,playlist):
-    # for f_name in os.listdir('.'):
-    #     if f_name.endswith('.txt'):
-    #         await ctx.send(f_name)
-    for f_name in os.listdir('Playlists/.'):
-        if f_name == playlist:
-            rm = ""
-            rm += "Playlists/"+f_name
-            os.remove(rm)
-            return
-    await ctx.send(playlist+" Does Not Exist")
+    @commands.command(name = 'delPl')
+    async def delPl(self, ctx,playlist):
+        # for f_name in os.listdir('.'):
+        #     if f_name.endswith('.txt'):
+        #         await ctx.send(f_name)
+        for f_name in os.listdir('Playlists/.'):
+            if f_name == playlist:
+                rm = ""
+                rm += "Playlists/"+f_name
+                os.remove(rm)
+                return
+        await ctx.send(playlist+" Does Not Exist")
 
 bot.add_cog(General())
 bot.help_command.cog = bot.cogs["General"]
 bot.add_cog(Music())
+bot.add_cog(Playlist())
 bot.run(TOKEN)
-
-
