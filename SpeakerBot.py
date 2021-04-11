@@ -1,9 +1,12 @@
 import discord
 import os
 from dotenv import load_dotenv
+from discord.utils import get
+from discord import FFmpegPCMAudio
 from discord.ext import commands
 import random
 import youtube_dl
+
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -54,6 +57,68 @@ async def leave(ctx):
     except:
         print("bot is not connected to vc")
         await ctx.send("Unable to leave voice channel: SpeakerBot is not currently in a voice channel.")
+
+@bot.command(aliases=['pl'])
+async def play(ctx, url : str):
+    song_here = os.path.isfile("song.mp3")
+    try:
+        if song_here:
+            os.remove("song.mp3")
+    except PermissionError:
+        await ctx.send("Music is currently playing! Use !stop or !s to stop the song!")
+        return
+
+    vc = discord.utils.get(ctx.guild.voice_channels, name='CF 420')
+    voice = discord.utils.get(bot.voice_clients, guild = ctx.guild)
+
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
+
+    #FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+    for file in os.listdir("./"):
+        if file.endswith(".mp3"):
+            os.rename(file, "song.mp3")
+    
+    voice.play(discord.FFmpegPCMAudio("song.mp3"))
+
+@bot.command(aliases=['p'])
+async def pause(ctx):
+    voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+    try:
+        if voice.is_playing():
+            voice.pause()
+            print("bot is paused")
+            await ctx.send("SpeakerBot is currently paused!")
+    except:
+        print("You messed up")
+        await ctx.send("Nothing is playing at the moment!")
+
+@bot.command(aliases=['r'])
+async def resume(ctx):
+    voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+    try:
+        if voice.is_paused():
+            voice.resume()
+            print("bot is now resuming")
+            await ctx.send("SpeakerBot is cranking out the tunes again!")
+    except:
+        print("You messed up")
+        await ctx.send("It's not paused silly!")
+
+@bot.command(aliases=['s'])
+async def stop(ctx):
+    voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+    voice.stop()
+    await ctx.send("Music has stopped! :(")
     
 #  @bot.command(name = 'testing')
 #  async def test(ctx):
@@ -81,14 +146,6 @@ async def delete(ctx, arg):
 
     # @bot.command()
     # async def p(self,ctx,*,query):
-
-@bot.command()
-async def play(self, ctx, *, url):
-    async with ctx.typing():
-        player = await YTDLSource.from_url(url, loop=self.bot.loop)
-        ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)  
-    await ctx.send(f'Now playing: {player.title}')
-# https://www.youtube.com/watch?v=m2uTFF_3MaA
 
 bot.run(TOKEN)
 
