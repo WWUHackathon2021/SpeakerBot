@@ -35,9 +35,14 @@ players = {}
 @bot.command(aliases=['j'])
 async def join(ctx):
     # vc = discord.utils.get(ctx.guild.voice_channels, name=arg)
-    vc = ctx.author.voice.channel
-
     try:
+        vc = ctx.author.voice.channel
+    except:
+        print("user isn not in vc, bot can't join")
+        await ctx.send("You must be connected to a voice channel for the SpeakerBot to join!")
+        return
+
+    try:    
         await vc.connect()
         print("joined vc")
         await ctx.send("SpeakerBot is now connected to a voice channel!")
