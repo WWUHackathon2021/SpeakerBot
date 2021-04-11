@@ -61,7 +61,7 @@ class General(commands.Cog):
 
 #A class that features all simple music player commands. Playlist commands are seperate.
 class Music(commands.Cog):
-    #The bot plays the youtube video link after the command. '!play [video url]' or '!pl [video url]'
+    #The bot plays the youtube video link after the command. '!play [video url]' or '!ps [video url]'
 
     @commands.command(aliases=['ps'], description="The bot will play the youtube link stated after \'!pl\'")
     async def playsong(self, ctx, url):
@@ -203,9 +203,7 @@ class Music(commands.Cog):
 class Playlist(commands.Cog):
 
     #Lists all currently stored playlists in the directory. '!list' or '!l'
-
     @commands.command(description="The bot displays all stored playlists")
-
     async def pList(self, ctx):
         for f_name in os.listdir('Playlists/.'):
             if f_name.endswith('.txt'):
