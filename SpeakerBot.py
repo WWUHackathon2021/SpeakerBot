@@ -5,7 +5,8 @@ from discord.utils import get
 from discord import FFmpegPCMAudio
 from discord.ext import commands
 import random
-import youtube_dl
+# import youtube_dl
+from youtube_dl import YoutubeDL
 
 
 load_dotenv()
@@ -64,36 +65,50 @@ async def leave(ctx):
         await ctx.send("Unable to leave voice channel: SpeakerBot is not currently in a voice channel.")
 
 @bot.command(aliases=['pl'])
-async def play(ctx, url : str):
-    song_here = os.path.isfile("song.mp3")
-    try:
-        if song_here:
-            os.remove("song.mp3")
-    except PermissionError:
-        await ctx.send("Music is currently playing! Use !stop or !s to stop the song!")
+async def play(ctx, url):
+    YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
+    FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+    voice = get(bot.voice_clients, guild=ctx.guild)
+
+    if not voice.is_playing():
+        with YoutubeDL(YDL_OPTIONS) as ydl:
+            info = ydl.extract_info(url, download=False)
+        URL = info['formats'][0]['url']
+        voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
+        voice.is_playing()
+    else:
+        await ctx.send("Already playing song")
         return
+# async def play(ctx, url : str):
+#     song_here = os.path.isfile("song.mp3")
+#     try:
+#         if song_here:
+#             os.remove("song.mp3")
+#     except PermissionError:
+#         await ctx.send("Music is currently playing! Use !stop or !s to stop the song!")
+#         return
 
-    vc = discord.utils.get(ctx.guild.voice_channels, name='CF 420')
-    voice = discord.utils.get(bot.voice_clients, guild = ctx.guild)
+#     vc = discord.utils.get(ctx.guild.voice_channels, name='CF 420')
+#     voice = discord.utils.get(bot.voice_clients, guild = ctx.guild)
 
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-    }
+#     ydl_opts = {
+#         'format': 'bestaudio/best',
+#         'postprocessors': [{
+#             'key': 'FFmpegExtractAudio',
+#             'preferredcodec': 'mp3',
+#             'preferredquality': '192',
+#         }],
+#     }
 
-    #FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+#     #FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
 
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-    for file in os.listdir("./"):
-        if file.endswith(".mp3"):
-            os.rename(file, "song.mp3")
+#     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+#         ydl.download([url])
+#     for file in os.listdir("./"):
+#         if file.endswith(".mp3"):
+#             os.rename(file, "song.mp3")
     
-    voice.play(discord.FFmpegPCMAudio("song.mp3"))
+#     voice.play(discord.FFmpegPCMAudio("song.mp3"))
 
 @bot.command(aliases=['p'])
 async def pause(ctx):
