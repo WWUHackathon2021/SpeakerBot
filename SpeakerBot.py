@@ -14,8 +14,6 @@ TOKEN = os.getenv("TOKEN")
 client = discord.Client()
 
 bot = commands.Bot(command_prefix='!')
-arr = []
-players = {}
 # @bot.event
 # async def on_ready():
 #    print('We have logged in as {0.user}'.format(bot))
@@ -152,20 +150,88 @@ async def stop(ctx):
 
 # bot.add_command(test)
 
+@bot.command(name = "list")
+async def list(ctx):
+    for f_name in os.listdir('.'):
+        if f_name.endswith('.txt'):
+            await ctx.send(f_name)
+
+@bot.command(name = 'addPl')
+async def addPl(ctx, arg):
+    newFile = ""
+    newFile = arg + ".txt"
+    file = open(newFile,'w+')
+
 @bot.command(name = 'add')
-async def add(ctx, arg):
-    arr.append(arg)
+async def add(ctx, song, playlist):
+    isSeen = 0
+    with open(playlist) as f:
+        seen = set()
+        dSong = ""
+        dSong = song+'\n'
+        seen.add(dSong)
+        for line in f:
+            line_lower = line.lower()
+            if line_lower in seen:
+                await ctx.send(song + " already exists")
+                isSeen = 1
+                return
+            else:
+                seen.add(line_lower)
+    if isSeen == 0:         
+        with open(playlist,'a') as file:
+            newSong = ""
+            newSong = song + '\n'
+            file.write(newSong)
+        msg = "Added "+  song +  " to " + playlist
+        await ctx.send(msg)
+#     for root, dirs, files in os.walk('.') :
+#         if playlist in files:
+#             with open(playlist)
 
-@bot.command(name = "show")
-async def show(ctx):
-    await ctx.send(arr)
 
-@bot.command(name = 'delete')
-async def delete(ctx, arg):
-    arr.remove(arg)
+@bot.command(name = "showPl")
+async def showPl(ctx,playlist):
+    iter = 1
+    songs = " "
+    songs += "**------------------------------------------------------------------------------------------**\n"
+    sep = '.'
+    owner = playlist.split(sep,1)[0]
+    songs += "**"+owner+'\'s Playlist**\n'
+    songs += "**------------------------------------------------------------------------------------------**\n"
+    with open(playlist) as file:
+        for line in file:
+            line_lower = line.lower()
+            songs+= "**"+str(iter)+"**" + ") " + line_lower
+            iter+=1
+    songs+="**------------------------------------------------------------------------------------------**\n"
+    await ctx.send(songs)
 
+
+@bot.command(name = 'delSong')
+async def delSong(ctx, song,playlist):
+    # with open(playlist,"r") as f:
+    #     lines = f.readlines()
+    # for line in lines:
+    #     print(line.strip("\n") != song)
+    #     print(line)
+
+    with open(playlist,"r") as f:
+        lines = f.readlines()
+    with open(playlist,"w") as f:
+        for line in lines:
+            if line.strip("\n") != song:
+                f.write(line)
     # @bot.command()
     # async def p(self,ctx,*,query):
+
+@bot.command(name = 'delPl')
+async def delPl(ctx,playlist):
+    # for f_name in os.listdir('.'):
+    #     if f_name.endswith('.txt'):
+    #         await ctx.send(f_name)
+    for f_name in os.listdir('Playlists/.'):
+        print(f_name == playlist)
 
 bot.run(TOKEN)
 
