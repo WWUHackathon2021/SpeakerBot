@@ -1,3 +1,4 @@
+from sys import setdlopenflags
 import discord
 import os
 from dotenv import load_dotenv
@@ -13,6 +14,7 @@ TOKEN = os.getenv("TOKEN")
 queue = deque()
 
 bot = commands.Bot(command_prefix='!')
+pq = deque([])
 
 
 #Once the bot is online, it will display a ready message in the terminal and in the bot-terminal channel.
@@ -61,21 +63,79 @@ class General(commands.Cog):
 class Music(commands.Cog):
     #The bot plays the youtube video link after the command. '!play [video url]' or '!pl [video url]'
 
-    @commands.command(aliases=['pl'], description="The bot will play the youtube link stated after \'!pl\'")
-    async def play(self, ctx, url):
+    @commands.command(aliases=['ps'], description="The bot will play the youtube link stated after \'!pl\'")
+    async def playsong(self, ctx, url):
         YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
         FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
         voice = get(bot.voice_clients, guild=ctx.guild)
-
+        
         if not voice.is_playing():
             with YoutubeDL(YDL_OPTIONS) as ydl:
                 info = ydl.extract_info(url, download=False)
             URL = info['formats'][0]['url']
             voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
             voice.is_playing()
-        else:
-            await ctx.send("Already playing song")
-            return
+                        
+        else:    
+            voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+            voice.stop()
+            with YoutubeDL(YDL_OPTIONS) as ydl:
+                info = ydl.extract_info(url, download=False)
+            URL = info['formats'][0]['url']
+            voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
+            voice.is_playing()
+    
+    #construct the playlist from the file 
+    def qList(arg): 
+        qList = ()
+        # endOfPL = False;
+        
+        pl = ""
+        pl = "Playlists/" + arg + ".txt"
+        file = open(pl, "r")
+        links = file.readLines()
+        for link in links:
+            qList.append(link)
+
+        return qList
+
+    #play the playlist
+    @commands.command(aliases=['pl'], description="The bot will play the playlist stated after \'!pl\'")
+    async def playlist(self, ctx, list):
+        YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
+        FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+        voice = get(bot.voice_clients, guild=ctx.guild)
+        
+        qList = qList(list)
+
+        for link in qList:
+            with YoutubeDL(YDL_OPTIONS) as ydl:
+                info = ydl.extract_info(link, download=False)
+            URL = info['formats'][0]['link']
+            voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
+            voice.is_playing()
+
+    
+    # @commands.command(aliases=['ql'], description="The bot will play the youtube link stated after \'!pl\'")
+    # async def queue(self, ctx, url):
+    #     pq.append(url)
+    #     await ctx.send(``{url}``, " has been added to queue")
+        
+    # @commands.command(aliases=['pq'], description="The bot will play the youtube link stated after \'!pl\'")
+    # async def play(self, ctx, url):
+    #     YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
+    #     FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+    #     voice = get(bot.voice_clients, guild=ctx.guild)
+        
+    #     if not voice.is_playing():
+    #         with YoutubeDL(YDL_OPTIONS) as ydl:
+    #             info = ydl.extract_info(url, download=False)
+    #         URL = info['formats'][0]['url']
+    #         voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
+    #         voice.is_playing()
+    #     else:
+    #         await ctx.send("Already playing song")
+    #         return
 
     #Pauses the current youtube video. '!pause' or '!p'
     @commands.command(aliases=['p'], description="The bot will pause the currently playing video.")
@@ -143,7 +203,9 @@ class Music(commands.Cog):
 class Playlist(commands.Cog):
 
     #Lists all currently stored playlists in the directory. '!list' or '!l'
+
     @commands.command(description="The bot displays all stored playlists")
+
     async def pList(self, ctx):
         for f_name in os.listdir('Playlists/.'):
             if f_name.endswith('.txt'):
@@ -231,6 +293,7 @@ class Playlist(commands.Cog):
 
     #Delete indicated song from the indicated playlist. Can't be undone!. '!delSong [song name] [playlist]' or '!delS [song name] [playlist]'
     @commands.command(aliases=['delS'], description="The bot deletes a selected song from the selected playlist.")
+
     async def delSong(self, ctx, song,playlist):
         # with open(playlist,"r") as f:
         #     lines = f.readlines()
@@ -250,6 +313,7 @@ class Playlist(commands.Cog):
 
     #Delete a specified playlist. Can't be undone! '!delPl' or '!dP'
     @commands.command(aliases=['dP'], description="The bot deletes an entire playlist")
+
     async def delPl(self, ctx,playlist):
         # for f_name in os.listdir('.'):
         #     if f_name.endswith('.txt'):
