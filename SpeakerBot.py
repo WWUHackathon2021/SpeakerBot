@@ -29,9 +29,11 @@ players = {}
 #         await message.channel.send('Hello!')
 #     await bot.process_commands(message)
 
-@bot.command()
-async def join(ctx, arg):
-    vc = discord.utils.get(ctx.guild.voice_channels, name=arg)
+@bot.command(aliases=['j'])
+async def join(ctx):
+    # vc = discord.utils.get(ctx.guild.voice_channels, name=arg)
+    vc = ctx.author.voice.channel
+
     try:
         await vc.connect()
         print("joined vc")
@@ -40,13 +42,14 @@ async def join(ctx, arg):
         print("already in vc")
         await ctx.send("SpeakerBot is already connected to a voice channel!")
 
-@bot.command()
+@bot.command(aliases=['l'])
 async def leave(ctx):
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-    # await voice.disconnect()
+
     try:
         if voice.is_connected():
             await voice.disconnect()
+            print("bot left vc")
             await ctx.send("SpeakerBot has left the voice channel")
     except:
         print("bot is not connected to vc")
