@@ -28,7 +28,7 @@ arr = []
 #         await message.channel.send('Hello!')
 #     await bot.process_commands(message)
 
-@bot.command()
+@bot.command(aliases=['j'])
 async def join(ctx):
     # vc = discord.utils.get(ctx.guild.voice_channels, name=arg)
     vc = ctx.author.voice.channel
@@ -41,7 +41,7 @@ async def join(ctx):
         print("already in vc")
         await ctx.send("SpeakerBot is already connected to a voice channel!")
 
-@bot.command()
+@bot.command(aliases=['l'])
 async def leave(ctx):
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
 
