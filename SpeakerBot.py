@@ -6,9 +6,11 @@ from discord import FFmpegPCMAudio
 from discord.ext import commands
 import random
 from youtube_dl import YoutubeDL
+from collections import deque
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
+queue = deque()
 
 bot = commands.Bot(command_prefix='!')
 
@@ -108,11 +110,41 @@ class Music(commands.Cog):
         voice.stop()
         await ctx.send("Music has stopped! :(")
 
+    #Adds the indicated video to the current queue (if there is one). '!queue [video url] or !q [video url]'
+    @commands.command(aliases=['q'], description="Queues up the next video specified")
+    async def queue(self, ctx, url):
+
+        global queue
+        queue.append(url)
+        await ctx.send(f'`{url}` was added to the queue!')
+
+    #Removes a song in the queue that the user can specify. '!skip [song number]'
+    @commands.command(description="The bot removes the specified song in the queue")
+    async def skip(self, ctx, num = None):
+        global queue
+
+        try:
+            if (num is None):
+                queue.popleft()
+            else:
+                del queue[int(num)]
+
+            await ctx.send(f'Current queue: `{queue}`')
+
+        except:
+            await ctx.send("Queue is empty or that index is out of bounds!")
+
+    #Displays a list of all the videos in the current queue. '!view or !v'
+    @commands.command(description="The bot shows all of the videos in the queue")
+    async def view(self, ctx):
+        await ctx.send(f'Current queue: `{queue}!`')
+
+#A class the specializes in playlist commands. 
 class Playlist(commands.Cog):
 
     #Lists all currently stored playlists in the directory. '!list' or '!l'
-    @commands.command(name = "list", description="The bot displays all stored playlists")
-    async def list(self, ctx):
+    @commands.command(description="The bot displays all stored playlists")
+    async def pList(self, ctx):
         for f_name in os.listdir('Playlists/.'):
             if f_name.endswith('.txt'):
                 await ctx.send(f_name)
@@ -153,7 +185,6 @@ class Playlist(commands.Cog):
                 file.write(newSong)
             msg = "Added "+  song +  " to " + playlist
             await ctx.send(msg)
-
 
     # with open(newPlaylist) as f:
     #     seen = set()
@@ -199,8 +230,7 @@ class Playlist(commands.Cog):
         await ctx.send(songs)
 
     #Delete indicated song from the indicated playlist. Can't be undone!. '!delSong [song name] [playlist]' or '!delS [song name] [playlist]'
-    @commands.command(aliases='delS', description="The bot deletes a selected song from the selected playlist.")
-
+    @commands.command(aliases=['delS'], description="The bot deletes a selected song from the selected playlist.")
     async def delSong(self, ctx, song,playlist):
         # with open(playlist,"r") as f:
         #     lines = f.readlines()
@@ -219,8 +249,7 @@ class Playlist(commands.Cog):
         # async def p(self,ctx,*,query):
 
     #Delete a specified playlist. Can't be undone! '!delPl' or '!dP'
-    @commands.command(aliases='dP', description="The bot deletes an entire playlist")
-
+    @commands.command(aliases=['dP'], description="The bot deletes an entire playlist")
     async def delPl(self, ctx,playlist):
         # for f_name in os.listdir('.'):
         #     if f_name.endswith('.txt'):
