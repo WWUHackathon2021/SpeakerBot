@@ -5,17 +5,12 @@ from discord.utils import get
 from discord import FFmpegPCMAudio
 from discord.ext import commands
 import random
-# import youtube_dl
 from youtube_dl import YoutubeDL
-
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
 bot = commands.Bot(command_prefix='!')
-
-arr = []
-players = {}
 
 @bot.event
 async def on_ready():
