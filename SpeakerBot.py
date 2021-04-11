@@ -83,12 +83,10 @@ async def delete(ctx, arg):
     # async def p(self,ctx,*,query):
 
 @bot.command()
-async def play(self, ctx, *, url):
-    async with ctx.typing():
-        player = await YTDLSource.from_url(url, loop=self.bot.loop)
-        ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)  
-    await ctx.send(f'Now playing: {player.title}')
-# https://www.youtube.com/watch?v=m2uTFF_3MaA
+async def play(ctx, url):
+    # voice = ctx.message.author.voice.voice_channel
+    vc = ctx.author.voice.channel
+    player = await vc.create_ytdl_player(url)
 
 bot.run(TOKEN)
 
