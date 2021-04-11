@@ -1,4 +1,3 @@
-from sys import setdlopenflags
 import discord
 import os
 from dotenv import load_dotenv
@@ -8,6 +7,7 @@ from discord.ext import commands
 import random
 from youtube_dl import YoutubeDL
 from collections import deque
+import asyncio
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -15,7 +15,8 @@ queue = deque()
 
 bot = commands.Bot(command_prefix='!')
 pq = deque([])
-
+songs = asyncio.Queue()
+next_song = asyncio.Event()
 
 #Once the bot is online, it will display a ready message in the terminal and in the bot-terminal channel.
 
@@ -24,6 +25,49 @@ async def on_ready():
    print('We have logged in as {0.user}'.format(bot))
    await bot.get_channel(828834006829105162).send("SpeakerBot is ready to go! Make sure to use !help if you want the command list.")
 
+# @bot.command(name="StartSongs")
+async def startsongs(ctx):
+    # voice = get(bot.voice_clients, guild=ctx.guild)
+    # if not voice.is_playing():
+#     Music.playlist(ctx)
+    while True:
+        await bot.wait_until_ready()
+        next_song.clear()
+        current = await songs.get()
+        await next_song.wait()
+        await playlist(ctx)
+        # await playlist()
+        
+def toggle_next():
+    bot.loop.call_soon_threadsafe(next_song.set)
+    
+@bot.command(aliases=['pl'], description="The bot will play the playlist stated after \'!pl\'",pass_context = True)
+async def playlist(ctx):
+    global queue
+    YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
+    FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+    voice = get(bot.voice_clients, guild=ctx.guild)
+    # voice = await channel.connect()
+    # qList = qList(list)
+
+# for url in queue:
+    url = queue.popleft()
+    with YoutubeDL(YDL_OPTIONS) as ydl:
+        info = ydl.extract_info(url, download=False)
+    URL = info['formats'][0]['url']
+    # voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
+    # if not voice.is_playing():
+    voice.play(FFmpegPCMAudio(URL), after=lambda e: print('done', e) )
+    # voice.is_playing()
+    # voice = await channel.connect()
+    # toggle_next()
+    # next_song.set()
+    toggle_next()
+    await songs.put(voice)
+    await startsongs(ctx)
+    # asyncio.create_task(startsongs())
+
+    # await startsongs()
 
 #Class of any general commands that don't fit any category.
 class General(commands.Cog):
@@ -65,6 +109,8 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['ps'], description="The bot will play the youtube link stated after \'!pl\'")
     async def playsong(self, ctx, url):
+
+
         YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
         FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
         voice = get(bot.voice_clients, guild=ctx.guild)
@@ -86,34 +132,50 @@ class Music(commands.Cog):
             voice.is_playing()
     
     #construct the playlist from the file 
-    def qList(arg): 
-        qList = ()
+    @commands.command(name="qList")
+    async def qList(self,ctx,arg): 
+        global queue
         # endOfPL = False;
         
         pl = ""
-        pl = "Playlists/" + arg + ".txt"
-        file = open(pl, "r")
-        links = file.readLines()
-        for link in links:
-            qList.append(link)
+        pl += "Playlists/" + arg +".txt"
+        # file = open(pl, "r")
+        # links = file.readLines()  
+        with open(pl,"r") as f:
+            lines = f.readlines()
+        for link in lines:
+            queue.append(link.strip("\n"))
 
-        return qList
+        # return qList
 
     #play the playlist
-    @commands.command(aliases=['pl'], description="The bot will play the playlist stated after \'!pl\'")
-    async def playlist(self, ctx, list):
-        YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
-        FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
-        voice = get(bot.voice_clients, guild=ctx.guild)
-        
-        qList = qList(list)
+    # @commands.command(aliases=['pl'], description="The bot will play the playlist stated after \'!pl\'")
+    # def playlist(self,ctx):
+    #     global queue
+    #     YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
+    #     FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+    #     voice = get(bot.voice_clients, guild=ctx.guild)
 
-        for link in qList:
-            with YoutubeDL(YDL_OPTIONS) as ydl:
-                info = ydl.extract_info(link, download=False)
-            URL = info['formats'][0]['link']
-            voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
-            voice.is_playing()
+    #     # qList = qList(list)
+
+    # # for url in queue:
+    #     url = queue.popleft()
+    #     with YoutubeDL(YDL_OPTIONS) as ydl:
+    #         info = ydl.extract_info(url, download=False)
+    #     URL = info['formats'][0]['url']
+    #     voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
+    #     voice.is_playing()
+    #     toggle_next()
+    #     songs.put(URL)
+        # startsongs(ctx)
+    # qList = qList(list)
+
+        # for link in qList:
+        #     with YoutubeDL(YDL_OPTIONS) as ydl:
+        #         info = ydl.extract_info(link, download=False)
+        #     URL = info['formats'][0]['link']
+        #     voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
+        #     voice.is_playing()
 
     
     # @commands.command(aliases=['ql'], description="The bot will play the youtube link stated after \'!pl\'")
@@ -328,4 +390,5 @@ bot.add_cog(General())
 bot.help_command.cog = bot.cogs["General"]
 bot.add_cog(Music())
 bot.add_cog(Playlist())
+# bot.loop.create_task(startsongs())
 bot.run(TOKEN)
