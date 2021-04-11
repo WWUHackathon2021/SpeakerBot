@@ -35,7 +35,7 @@ async def join(ctx):
     try:
         vc = ctx.author.voice.channel
     except:
-        print("user isn not in vc, bot can't join")
+        print("user is not in vc, bot can't join")
         await ctx.send("You must be connected to a voice channel for the SpeakerBot to join!")
         return
 
