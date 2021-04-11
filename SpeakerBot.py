@@ -6,19 +6,36 @@ from discord import FFmpegPCMAudio
 from discord.ext import commands
 import random
 from youtube_dl import YoutubeDL
-
+import asyncio
+from collections import deque
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
 bot = commands.Bot(command_prefix='!')
 
-
+queue = []
 #Once the bot is online, it will display a ready message in the terminal and in the bot-terminal channel.
 
 @bot.event
 async def on_ready():
    print('We have logged in as {0.user}'.format(bot))
    await bot.get_channel(828834006829105162).send("SpeakerBot is ready to go! Make sure to use !help if you want the command list.")
+
+@bot.command(name = "play_song")
+async def play_song(ctx,url):
+    server = ctx.message.guild
+    vc = server.voice_client
+
+    player = await YoutubeDL.source(url,loop = bot.loop)
+    vc.play(FFmpegPCMAudio(source=url) )
+def play_next(ctx,source):
+    voice = get(bot.voice_clients, guild=ctx.guild)
+    if len(queue) >=1:
+        del queue[0]
+        voice = discord.utils.get(bot.voice_clients, guild = ctx.guild)
+        voice.play(FFmpegPCMAudio(source = source,before_options = lambda e: play_next(ctx)))
+        asyncio.run_coroutine_threadsafe(ctx.send("no more items in queue"))
+
 
 
 #Class of any general commands that don't fit any category.
@@ -62,18 +79,20 @@ class Music(commands.Cog):
     @commands.command(aliases=['pl'], description="The bot will play the youtube link stated after \'!pl\'")
     async def play(self, ctx, url):
         YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
-        FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+        # FFMPEG_OPTIONS = {'after = lambda e: play_next(ctx)'}
+        queue.append(url)
+        # FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
         voice = get(bot.voice_clients, guild=ctx.guild)
-
         if not voice.is_playing():
             with YoutubeDL(YDL_OPTIONS) as ydl:
                 info = ydl.extract_info(url, download=False)
             URL = info['formats'][0]['url']
-            voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
+            voice.play(FFmpegPCMAudio(source = URL, before_options = lambda e: play_next(ctx)))
             voice.is_playing()
         else:
             await ctx.send("Already playing song")
             return
+        
 
     #Pauses the current youtube video. '!pause' or '!p'
     @commands.command(aliases=['p'], description="The bot will pause the currently playing video.")
@@ -112,7 +131,7 @@ class Playlist(commands.Cog):
 
     #Lists all currently stored playlists in the directory. '!list' or '!l'
     @commands.command(name = "list", description="The bot displays all stored playlists")
-    async def list(self, ctx):
+    async def pList(self, ctx):
         for f_name in os.listdir('Playlists/.'):
             if f_name.endswith('.txt'):
                 await ctx.send(f_name)
@@ -199,7 +218,7 @@ class Playlist(commands.Cog):
         await ctx.send(songs)
 
     #Delete indicated song from the indicated playlist. Can't be undone!. '!delSong [song name] [playlist]' or '!delS [song name] [playlist]'
-    @commands.command(aliases='delS', description="The bot deletes a selected song from the selected playlist.")
+    @commands.command(aliases=['delS'], description="The bot deletes a selected song from the selected playlist.")
 
     async def delSong(self, ctx, song,playlist):
         # with open(playlist,"r") as f:
@@ -219,7 +238,7 @@ class Playlist(commands.Cog):
         # async def p(self,ctx,*,query):
 
     #Delete a specified playlist. Can't be undone! '!delPl' or '!dP'
-    @commands.command(aliases='dP', description="The bot deletes an entire playlist")
+    @commands.command(aliases=['dP'], description="The bot deletes an entire playlist")
 
     async def delPl(self, ctx,playlist):
         # for f_name in os.listdir('.'):
