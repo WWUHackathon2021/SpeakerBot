@@ -24,10 +24,10 @@ async def on_ready():
 @bot.command(name = "play_song")
 async def play_song(ctx,url):
     server = ctx.message.guild
-    vc = server.voice_client
+    vc = server.voice_clients
 
     player = await YoutubeDL.source(url,loop = bot.loop)
-    vc.play(FFmpegPCMAudio(source=url) )
+    vc.play(player, )
 def play_next(ctx,source):
     voice = get(bot.voice_clients, guild=ctx.guild)
     if len(queue) >=1:
