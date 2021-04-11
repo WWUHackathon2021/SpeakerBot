@@ -134,7 +134,7 @@ class Music(commands.Cog):
                 await ctx.send("SpeakerBot is cranking out the tunes again!")
         except:
             print("You messed up")
-            await ctx.send("It's not paused silly!")
+            await ctx.send("It's not paused, silly!")
 
     @commands.command(aliases=['s'], description="The bot will stop the currently playing video")
     async def stop(self, ctx):
